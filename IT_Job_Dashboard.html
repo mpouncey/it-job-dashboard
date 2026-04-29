@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Job Dashboard — JSearch Live</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #181b24;
+    --bg3: #1e2130;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555a6b;
+    --blue: #3b82f6;
+    --blue-dim: #1d3a6b;
+    --blue-text: #93c5fd;
+    --green: #22c55e;
+    --green-dim: #14532d;
+    --green-text: #86efac;
+    --amber: #f59e0b;
+    --amber-dim: #78350f;
+    --amber-text: #fcd34d;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --red-text: #fca5a5;
+    --teal: #14b8a6;
+    --teal-dim: #134e4a;
+    --teal-text: #5eead4;
+    --accent: #6366f1;
+    --accent-dim: #312e81;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Top nav bar */
+  .navbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-logo svg { width: 16px; height: 16px; }
+
+  .nav-title {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-sources {
+    display: flex;
+    gap: 6px;
+  }
+
+  .src-pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .sp-in { background: var(--blue-dim); color: var(--blue-text); }
+  .sp-li { background: var(--green-dim); color: var(--green-text); }
+  .sp-di { background: var(--amber-dim); color: var(--amber-text); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .req-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .req-warn { color: var(--red-text) !important; }
+
+  .last-fetch {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  /* Main layout */
+  .main { padding: 1.5rem 2rem 3rem; max-width: 1400px; margin: 0 auto; }
+
+  /* API key section */
+  .api-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .api-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .key-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stat-val {
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+
+  .stat-card.highlight { border-color: var(--accent-dim); background: rgba(99,102,241,0.06); }
+  .stat-card.highlight .stat-val { color: #a5b4fc; }
+
+  /* Search + filters bar */
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  input[type="text"], input[type="password"], select {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder, input[type="password"]::placeholder {
+    color: var(--text3);
+  }
+
+  select option { background: var(--bg2); }
+
+  .input-query { flex: 2; min-width: 200px; }
+  .input-location { flex: 1; min-width: 160px; }
+  .input-key { flex: 1; min-width: 240px; }
+  .input-filter { flex: 1; min-width: 160px; }
+
+  /* Buttons */
+  .btn-fetch {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-fetch:hover { opacity: 0.88; }
+  .btn-fetch:active { transform: scale(0.98); }
+  .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-clear {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-clear:hover { background: var(--bg3); }
+
+  /* Spinner */
+  .spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: none;
+  }
+
+  .spinning { animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error banner */
+  .err-banner {
+    background: var(--red-dim);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--red-text);
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+
+  th {
+    background: var(--bg3);
+    color: var(--text3);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.12s;
+  }
+
+  th:hover { color: var(--text); }
+  th.active { color: var(--blue-text); }
+
+  th .sort-arrow { margin-left: 4px; opacity: 0.5; font-size: 10px; }
+  th.active .sort-arrow { opacity: 1; }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* Job title link */
+  .job-link {
+    color: var(--blue-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.12s;
+  }
+
+  .job-link:hover { color: #bfdbfe; text-decoration: underline; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .badge-fulltime { background: var(--blue-dim); color: var(--blue-text); }
+  .badge-contract { background: var(--amber-dim); color: var(--amber-text); }
+  .badge-parttime { background: var(--teal-dim); color: var(--teal-text); }
+  .badge-intern   { background: var(--green-dim); color: var(--green-text); }
+  .badge-other    { background: rgba(255,255,255,0.06); color: var(--text2); }
+  .badge-remote   { background: var(--accent-dim); color: #a5b4fc; }
+
+  .src-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 5px;
+    flex-shrink: 0;
+  }
+
+  .dot-in  { background: var(--blue); }
+  .dot-li  { background: var(--green); }
+  .dot-di  { background: var(--amber); }
+  .dot-ot  { background: var(--text3); }
+
+  .src-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .src-badge svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+  .sb-in { background: var(--blue-dim);  color: var(--blue-text);  border: 1px solid rgba(59,130,246,0.25); }
+  .sb-li { background: var(--green-dim); color: var(--green-text); border: 1px solid rgba(34,197,94,0.25); }
+  .sb-di { background: var(--amber-dim); color: var(--amber-text); border: 1px solid rgba(245,158,11,0.25); }
+  .sb-ot { background: rgba(255,255,255,0.04); color: var(--text2); border: 1px solid var(--border); }
+
+  .publisher-full {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .salary-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--green-text);
+  }
+
+  .salary-none { color: var(--text3); }
+
+  .date-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    color: var(--text3);
+  }
+
+  .empty-state .empty-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  .empty-state p { font-size: 13px; line-height: 1.7; }
+  .empty-state strong { color: var(--text2); }
+
+  /* Footer note */
+  .footnote {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .footnote a { color: var(--text2); }
+
+  /* Column widths */
+  col.c1 { width: 22%; }
+  col.c2 { width: 15%; }
+  col.c3 { width: 12%; }
+  col.c4 { width: 10%; }
+  col.c5 { width: 10%; }
+  col.c6 { width: 17%; }
+  col.c7 { width: 14%; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .navbar { padding: 0 1rem; }
+    .main { padding: 1rem; }
+    .nav-sources { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <div class="nav-logo">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="5" height="5" rx="1.5" fill="white"/>
+        <rect x="9" y="2" width="5" height="5" rx="1.5" fill="white" opacity="0.6"/>
+        <rect x="2" y="9" width="5" height="5" rx="1.5" fill="white" opacity="0.6"/>
+        <rect x="9" y="9" width="5" height="5" rx="1.5" fill="white" opacity="0.3"/>
+      </svg>
+    </div>
+    <span class="nav-title">IT Job Dashboard</span>
+    <div class="nav-sources">
+      <span class="src-pill sp-in">Indeed</span>
+      <span class="src-pill sp-li">LinkedIn</span>
+      <span class="src-pill sp-di">DICE*</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="req-counter" id="reqCount">0 / ~500 requests this month</span>
+    <span class="last-fetch" id="lastFetch"></span>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- API Key row -->
+  <div class="api-section">
+    <svg class="key-icon" viewBox="0 0 14 14" fill="none">
+      <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M7.5 7.5L12 12M9.5 10L11 11.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <span class="api-label">RapidAPI Key</span>
+    <input type="password" class="input-key" id="apiKey" placeholder="Paste your JSearch RapidAPI key here..." autocomplete="off">
+    <button onclick="saveKey()" style="background:var(--green-dim);color:var(--green-text);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:7px 14px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;">Save key</button>
+    <button onclick="clearKey()" style="background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-family:DM Sans,sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;">Clear saved</button>
+    <span id="keySavedMsg" style="font-size:12px;color:var(--green-text);display:none;">Key saved to browser</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:auto;">Get a free key at <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" style="color:var(--blue-text)" target="_blank">rapidapi.com - JSearch</a></span>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <input type="text" class="input-query" id="queryInput" placeholder="Job title or keywords, e.g. Azure Cloud Engineer, MCT, IT Generalist..." value="Azure Cloud Engineer">
+    <input type="text" class="input-location" id="locationInput" placeholder="Location, e.g. Pittsburgh PA" value="Pittsburgh PA">
+    <button class="btn-fetch" id="refreshBtn" onclick="fetchJobs()">
+      <span class="spinner" id="spinner"></span>
+      <span id="btnLabel">Fetch jobs</span>
+    </button>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <select id="fType" style="min-width:140px">
+      <option value="">All job types</option>
+      <option value="FULLTIME">Full-time</option>
+      <option value="CONTRACTOR">Contract</option>
+      <option value="PARTTIME">Part-time</option>
+      <option value="INTERN">Internship</option>
+    </select>
+    <select id="fDatePosted" style="min-width:140px">
+      <option value="all">Any date posted</option>
+      <option value="today">Today</option>
+      <option value="3days">Past 3 days</option>
+      <option value="week">Past week</option>
+      <option value="month">Past month</option>
+    </select>
+    <select id="fRemote" style="min-width:140px">
+      <option value="">On-site or remote</option>
+      <option value="true">Remote only</option>
+    </select>
+    <select id="fSrc" style="min-width:130px">
+      <option value="">All sources</option>
+      <option value="Indeed">Indeed</option>
+      <option value="LinkedIn">LinkedIn</option>
+      <option value="DICE">DICE</option>
+    </select>
+    <input type="text" class="input-filter" id="fSearch" placeholder="Filter results by keyword..." oninput="applyFilters()">
+    <button class="btn-clear" onclick="clearFilters()">Clear filters</button>
+    <button onclick="openExportModal()" style="background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10v10H2V2z" stroke="currentColor" stroke-width="1.2" rx="1"/><path d="M5 5h4M5 7h4M5 9h2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Export to Notion
+    </button>
+  </div>
+
+  <!-- Notion Export Modal -->
+  <div id="notionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.5rem;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h2 style="font-size:15px;font-weight:500;">Export to Notion</h2>
+        <button onclick="closeExportModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;line-height:1;">×</button>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6;">Select which jobs to export to your <strong style="color:var(--text);">IT Job Tracker</strong> Notion database. You can fill in Interview, Applied Date, and Contact fields directly in Notion after export.</p>
+
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">
+          <input type="checkbox" id="exportAll" onchange="toggleSelectAll(this)" style="accent-color:var(--accent);width:14px;height:14px;">
+          <span style="font-size:13px;color:var(--text2);font-weight:500;">Select all visible results</span>
+        </label>
+        <div id="exportJobList" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px 0;"></div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:1rem;font-size:12px;color:var(--text2);">
+        <span style="color:var(--green-text);font-weight:500;">✓ Notion database ready:</span> IT Job Tracker — <a href="https://www.notion.so/0ab94e5db55c41fda425ce31214d6c19" target="_blank" style="color:var(--blue-text);">Open in Notion</a>
+      </div>
+
+      <div id="exportStatus" style="display:none;font-size:13px;margin-bottom:10px;padding:8px 12px;border-radius:8px;"></div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeExportModal()" style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">Cancel</button>
+        <button onclick="exportToNotion()" id="exportBtn" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;">Export selected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div class="err-banner" id="errBanner"></div>
+
+  <!-- Stats -->
+  <div class="stats" id="statsGrid" style="display:none"></div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <colgroup>
+        <col class="c1"><col class="c2"><col class="c3">
+        <col class="c4"><col class="c5"><col class="c6"><col class="c7">
+      </colgroup>
+      <thead>
+        <tr>
+          <th onclick="sortBy('title')" id="th-title">Job title <span class="sort-arrow">↕</span></th>
+          <th onclick="sortBy('company')" id="th-company">Company <span class="sort-arrow">↕</span></th>
+          <th onclick="sortBy('location')" id="th-location">Location <span class="sort-arrow">↕</span></th>
+          <th>Type</th>
+          <th onclick="sortBy('salary')" id="th-salary">Salary <span class="sort-arrow">↕</span></th>
+          <th>Retrieved from</th>
+          <th onclick="sortBy('date')" id="th-date" class="active">Posted <span class="sort-arrow">↓</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-icon">&#9906;</div>
+              <p><strong>No jobs loaded yet.</strong><br>
+              Enter your RapidAPI key, set your search terms,<br>then click <strong>Fetch jobs</strong> to pull live listings.</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footnote">
+    * DICE listings appear when indexed by Google for Jobs — Indeed and LinkedIn are the primary sources via JSearch.
+    &nbsp;|&nbsp; Free tier: ~500 requests/month &nbsp;|&nbsp; Each fetch = 1 request (up to 3 pages = ~90 results)
+  </div>
+
+</div>
+
+<script>
+  let allJobs = [];
+  let reqCount = 0;
+  let sortKey = 'date';
+  let sortAsc = false;
+
+  function srcInfo(publisher) {
+    if (!publisher) return { label: 'Other', badgeClass: 'sb-ot', icon: '' };
+    const p = publisher.toLowerCase();
+    if (p.includes('linkedin')) return { label: 'LinkedIn', badgeClass: 'sb-li', icon: '<svg viewBox="0 0 10 10" fill="currentColor"><rect x="0" y="3" width="2" height="7"/><circle cx="1" cy="1" r="1"/><path d="M3.5 3h2v1.3C6 3.2 6.8 3 7.5 3 9 3 10 4 10 5.8V10H8V6c0-.8-.3-1.3-1-1.3s-1.5.5-1.5 1.3V10H3.5V3z"/></svg>' };
+    if (p.includes('dice'))     return { label: 'DICE',     badgeClass: 'sb-di', icon: '' };
+    if (p.includes('indeed'))   return { label: 'Indeed',   badgeClass: 'sb-in', icon: '' };
+    const short = publisher.length > 18 ? publisher.slice(0, 16) + '…' : publisher;
+    return { label: short, badgeClass: 'sb-ot', icon: '', fullName: publisher };
+  }
+
+  function fmtSalary(j) {
+    const mn = j.job_min_salary, mx = j.job_max_salary, pd = j.job_salary_period;
+    if (!mn && !mx) return null;
+    const fmt = v => v >= 1000 ? '$' + Math.round(v / 1000) + 'k' : '$' + Math.round(v);
+    const base = mn && mx ? fmt(mn) + '–' + fmt(mx) : mn ? fmt(mn) + '+' : 'up to ' + fmt(mx);
+    return pd === 'HOUR' ? base + '/hr' : base;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+      const diff = Math.floor((Date.now() - new Date(iso)) / 86400000);
+      if (diff === 0)  return 'Today';
+      if (diff === 1)  return '1d ago';
+      if (diff < 7)   return diff + 'd ago';
+      if (diff < 30)  return Math.floor(diff / 7) + 'w ago';
+      return Math.floor(diff / 30) + 'mo ago';
+    } catch(e) { return '—'; }
+  }
+
+  function badgeClass(raw) {
+    if (!raw) return 'badge-other';
+    const m = { FULLTIME: 'badge-fulltime', CONTRACTOR: 'badge-contract', PARTTIME: 'badge-parttime', INTERN: 'badge-intern' };
+    return m[raw] || 'badge-other';
+  }
+
+  function badgeLabel(raw) {
+    if (!raw) return '—';
+    const m = { FULLTIME: 'Full-time', CONTRACTOR: 'Contract', PARTTIME: 'Part-time', INTERN: 'Internship' };
+    return m[raw] || raw;
+  }
+
+  function sortBy(key) {
+    if (sortKey === key) sortAsc = !sortAsc;
+    else { sortKey = key; sortAsc = false; }
+    document.querySelectorAll('th').forEach(th => th.classList.remove('active'));
+    const el = document.getElementById('th-' + key);
+    if (el) {
+      el.classList.add('active');
+      el.querySelector('.sort-arrow').textContent = sortAsc ? '↑' : '↓';
+    }
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const kw  = document.getElementById('fSearch').value.toLowerCase();
+    const src = document.getElementById('fSrc').value;
+
+    let list = allJobs.filter(j => {
+      if (src && srcInfo(j.job_publisher).label !== src) return false;
+      if (kw && !(j.job_title + ' ' + j.employer_name + ' ' + (j.job_description || '')).toLowerCase().includes(kw)) return false;
+      return true;
+    });
+
+    list.sort((a, b) => {
+      let va = '', vb = '';
+      if (sortKey === 'title')   { va = a.job_title || ''; vb = b.job_title || ''; }
+      else if (sortKey === 'company') { va = a.employer_name || ''; vb = b.employer_name || ''; }
+      else if (sortKey === 'salary')  { va = (a.job_min_salary || 0).toString(); vb = (b.job_min_salary || 0).toString(); }
+      else                       { va = a.job_posted_at_datetime_utc || ''; vb = b.job_posted_at_datetime_utc || ''; }
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+    renderTable(list);
+    renderStats(list);
+  }
+
+  function renderStats(list) {
+    const el = document.getElementById('statsGrid');
+    if (!allJobs.length) { el.style.display = 'none'; return; }
+    el.style.display = 'grid';
+    const indeed   = list.filter(j => srcInfo(j.job_publisher).label === 'Indeed').length;
+    const linkedin = list.filter(j => srcInfo(j.job_publisher).label === 'LinkedIn').length;
+    const dice     = list.filter(j => srcInfo(j.job_publisher).label === 'DICE').length;
+    const remote   = list.filter(j => j.job_is_remote).length;
+    const hasSal   = list.filter(j => j.job_min_salary || j.job_max_salary).length;
+    el.innerHTML = `
+      <div class="stat-card highlight">
+        <div class="stat-label">Results</div>
+        <div class="stat-val">${list.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Indeed</div>
+        <div class="stat-val">${indeed}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">LinkedIn</div>
+        <div class="stat-val">${linkedin}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">DICE</div>
+        <div class="stat-val">${dice}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Remote</div>
+        <div class="stat-val">${remote}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">With salary</div>
+        <div class="stat-val">${hasSal}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">API calls</div>
+        <div class="stat-val">${reqCount}</div>
+      </div>
+    `;
+  }
+
+  function renderTable(list) {
+    const tbody = document.getElementById('tbody');
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <div class="empty-icon">&#9906;</div>
+        <p>No results match your current filters.<br>Try broadening your search or clearing filters.</p>
+      </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(j => {
+      const src    = srcInfo(j.job_publisher);
+      const url    = j.job_apply_link || j.job_google_link || '#';
+      const sal    = fmtSalary(j);
+      const loc    = j.job_is_remote ? 'Remote' : (j.job_city && j.job_state ? j.job_city + ', ' + j.job_state : j.job_country || '—');
+      const title  = (j.job_title || 'Unknown').replace(/</g, '&lt;');
+      const co     = (j.employer_name || '—').replace(/</g, '&lt;');
+      return `<tr>
+        <td title="${title}">
+          <a class="job-link" href="${url}" target="_blank" rel="noopener">${title}</a>
+          ${j.job_is_remote ? '<span class="badge badge-remote" style="margin-left:6px;font-size:10px">Remote</span>' : ''}
+        </td>
+        <td title="${co}">${co}</td>
+        <td title="${loc}">${loc}</td>
+        <td><span class="badge ${badgeClass(j.job_employment_type)}">${badgeLabel(j.job_employment_type)}</span></td>
+        <td>${sal ? '<span class="salary-val">' + sal + '</span>' : '<span class="salary-none">—</span>'}</td>
+        <td>
+          <span class="src-badge ${src.badgeClass}">${src.icon}${src.label}</span>
+          ${j.job_publisher && !['Indeed','LinkedIn','DICE'].includes(src.label) ? '<span class="publisher-full" title="' + (j.job_publisher||'').replace(/"/g,'') + '">' + (j.job_publisher||'').replace(/</g,'&lt;') + '</span>' : ''}
+        </td>
+        <td><span class="date-val">${fmtDate(j.job_posted_at_datetime_utc)}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function showErr(msg) {
+    const b = document.getElementById('errBanner');
+    b.textContent = msg;
+    b.style.display = 'block';
+  }
+
+  function hideErr() {
+    document.getElementById('errBanner').style.display = 'none';
+  }
+
+  function clearFilters() {
+    document.getElementById('fSearch').value = '';
+    document.getElementById('fSrc').value = '';
+    applyFilters();
+  }
+
+  async function fetchJobs() {
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) {
+      showErr('Please paste your RapidAPI JSearch key into the field above.');
+      return;
+    }
+
+    const query      = document.getElementById('queryInput').value.trim() || 'IT jobs';
+    const location   = document.getElementById('locationInput').value.trim();
+    const empType    = document.getElementById('fType').value;
+    const datePosted = document.getElementById('fDatePosted').value;
+    const remoteOnly = document.getElementById('fRemote').value;
+
+    const btn     = document.getElementById('refreshBtn');
+    const spinner = document.getElementById('spinner');
+    const label   = document.getElementById('btnLabel');
+    btn.disabled  = true;
+    spinner.classList.add('spinning');
+    label.textContent = 'Fetching…';
+    hideErr();
+
+    const params = new URLSearchParams({
+      query:     query + (location ? ' in ' + location : ''),
+      page:      '1',
+      num_pages: '3',
+      country:   'us',
+    });
+
+    if (empType    && empType !== '')     params.append('employment_types', empType);
+    if (datePosted && datePosted !== 'all') params.append('date_posted', datePosted);
+    if (remoteOnly === 'true')            params.append('remote_jobs_only', 'true');
+
+    try {
+      const res = await fetch('https://jsearch.p.rapidapi.com/search?' + params.toString(), {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key':  key,
+          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
+        }
+      });
+
+      reqCount++;
+      const rc = document.getElementById('reqCount');
+      rc.textContent = reqCount + ' / ~500 requests this month';
+      if (reqCount >= 450) rc.classList.add('req-warn');
+
+      if (!res.ok) {
+        if (res.status === 403 || res.status === 401) {
+          showErr('Invalid API key (401/403). Double-check your RapidAPI key and confirm JSearch is subscribed on the Free plan.');
+        } else if (res.status === 429) {
+          showErr('Rate limit hit (429). You may have exceeded the free tier. Wait a moment and try again, or upgrade your plan.');
+        } else {
+          const txt = await res.text();
+          showErr('API error ' + res.status + ': ' + txt.slice(0, 160));
+        }
+        return;
+      }
+
+      const data = await res.json();
+      allJobs = data.data || [];
+
+      if (allJobs.length === 0) {
+        showErr('No results returned. Try different keywords or a broader location.');
+      }
+
+      document.getElementById('lastFetch').textContent =
+        'Fetched ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      applyFilters();
+
+    } catch (e) {
+      showErr('Network error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      spinner.classList.remove('spinning');
+      label.textContent = 'Refresh';
+    }
+  }
+
+  // ── Notion Export ──────────────────────────────────────────
+  const NOTION_DB_ID = '0ab94e5db55c41fda425ce31214d6c19';
+  const NOTION_API   = 'https://api.anthropic.com/v1/messages';
+  let exportableJobs = [];
+
+  function openExportModal() {
+    if (!allJobs.length) {
+      showErr('No jobs loaded yet. Fetch jobs first before exporting.');
+      return;
+    }
+    // Build the current visible/filtered list
+    const kw  = document.getElementById('fSearch').value.toLowerCase();
+    const src = document.getElementById('fSrc').value;
+    exportableJobs = allJobs.filter(j => {
+      if (src && srcInfo(j.job_publisher).label !== src) return false;
+      if (kw && !(j.job_title + ' ' + j.employer_name + ' ' + (j.job_description || '')).toLowerCase().includes(kw)) return false;
+      return true;
+    });
+
+    const list = document.getElementById('exportJobList');
+    list.innerHTML = exportableJobs.map((j, i) => {
+      const src = srcInfo(j.job_publisher).label;
+      const co  = j.employer_name || 'Unknown';
+      const loc = j.job_is_remote ? 'Remote' : (j.job_city && j.job_state ? j.job_city + ', ' + j.job_state : '');
+      return `<label style="display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+        <input type="checkbox" class="export-cb" data-idx="${i}" checked style="accent-color:var(--accent);width:13px;height:13px;flex-shrink:0;">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(j.job_title||'').replace(/"/g,'')}">
+          <strong style="color:var(--text)">${(j.job_title||'Unknown').replace(/</g,'&lt;')}</strong>
+          <span style="color:var(--text2);margin-left:6px;">${co.replace(/</g,'&lt;')}</span>
+        </span>
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap;">${src}${loc ? ' · ' + loc : ''}</span>
+      </label>`;
+    }).join('');
+    document.getElementById('exportAll').checked = true;
+    document.getElementById('exportStatus').style.display = 'none';
+    document.getElementById('notionModal').style.display = 'flex';
+  }
+
+  function closeExportModal() {
+    document.getElementById('notionModal').style.display = 'none';
+  }
+
+  function toggleSelectAll(cb) {
+    document.querySelectorAll('.export-cb').forEach(c => c.checked = cb.checked);
+  }
+
+  async function exportToNotion() {
+    const selected = [...document.querySelectorAll('.export-cb:checked')].map(cb => exportableJobs[+cb.dataset.idx]);
+    if (!selected.length) { setExportStatus('Please select at least one job to export.', 'warn'); return; }
+
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = true;
+    btn.textContent = 'Exporting…';
+    setExportStatus('Sending ' + selected.length + ' job(s) to Notion via Claude...', 'info');
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const jobLines = selected.map((j, i) => {
+      const src      = srcInfo(j.job_publisher).label;
+      const loc      = j.job_is_remote ? 'Remote' : (j.job_city && j.job_state ? j.job_city + ', ' + j.job_state : j.job_country || '');
+      const sal      = fmtSalary(j) || 'Not listed';
+      const type     = badgeLabel(j.job_employment_type);
+      const url      = j.job_apply_link || j.job_google_link || '';
+      const notionSrc = ['Indeed','LinkedIn','DICE'].includes(src) ? src : 'Other';
+      return `Job ${i+1}:
+- Job Title: ${j.job_title || 'Unknown'}
+- Company: ${j.employer_name || ''}
+- Location: ${loc}
+- Job Type: ${type}
+- Salary: ${sal}
+- Retrieved From: ${notionSrc}
+- Job URL: ${url}
+- Date Added: ${today}
+- Notes: ${(j.job_description || '').slice(0, 300)}`;
+    }).join('\n\n');
+
+    const prompt = `Please add the following job listings to my Notion IT Job Tracker database (ID: ${NOTION_DB_ID}). For each job, create a new page with these exact fields. Set Status to "New", Interview Y/N to unchecked, leave Applied Date, Date of Interview, and Contact Name blank.
+
+${jobLines}
+
+Please add all ${selected.length} jobs to the database now using the Notion MCP tool.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          mcp_servers: [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion' }],
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('API error ' + res.status + ': ' + txt.slice(0, 120));
+      }
+
+      const data = await res.json();
+      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join(' ');
+      const toolUses   = (data.content || []).filter(b => b.type === 'mcp_tool_use').length;
+
+      if (toolUses > 0 || /added|created|success/i.test(textBlocks)) {
+        setExportStatus('✓ ' + selected.length + ' job(s) exported to Notion! Open your IT Job Tracker to fill in Interview, Applied Date, and Contact details.', 'success');
+      } else {
+        setExportStatus('Export may have partially worked. Check your Notion IT Job Tracker to confirm. Response: ' + textBlocks.slice(0, 200), 'warn');
+      }
+
+    } catch(e) {
+      setExportStatus('Export error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Export selected';
+    }
+  }
+
+  function setExportStatus(msg, type) {
+    const el = document.getElementById('exportStatus');
+    const colors = { info:'var(--blue-dim)', success:'var(--green-dim)', warn:'var(--amber-dim)', error:'var(--red-dim)' };
+    const text   = { info:'var(--blue-text)', success:'var(--green-text)', warn:'var(--amber-text)', error:'var(--red-text)' };
+    el.style.display    = 'block';
+    el.style.background = colors[type];
+    el.style.color      = text[type];
+    el.style.border     = '1px solid ' + text[type];
+    el.style.lineHeight = '1.6';
+    el.textContent      = msg;
+  }
+
+  // Pre-load Notion token if saved
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem(KEY_STORAGE);
+    if (saved) {
+      document.getElementById('apiKey').value = saved;
+      document.getElementById('keySavedMsg').textContent = 'Key loaded from browser storage';
+      document.getElementById('keySavedMsg').style.display = 'inline';
+      setTimeout(() => { document.getElementById('keySavedMsg').style.display = 'none'; }, 3000);
+    }
+  });
+
+  // ── localStorage key management ────────────────────────────
+  const KEY_STORAGE = 'itdash_rapidapi_key';
+
+  function saveKey() {
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) { showErr('Please paste your API key first, then click Save key.'); return; }
+    localStorage.setItem(KEY_STORAGE, key);
+    const msg = document.getElementById('keySavedMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  }
+
+  function clearKey() {
+    localStorage.removeItem(KEY_STORAGE);
+    document.getElementById('apiKey').value = '';
+    document.getElementById('keySavedMsg').style.display = 'none';
+  }
+
+  // Allow Enter key to trigger fetch
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.target.id === 'queryInput' || e.target.id === 'locationInput')) {
+      fetchJobs();
+    }
+  });
+</script>
+</body>
+</html>
