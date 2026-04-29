@@ -949,67 +949,69 @@
     const btn = document.getElementById('exportBtn');
     btn.disabled = true;
     btn.textContent = 'Exporting…';
-    setExportStatus('Sending ' + selected.length + ' job(s) to Notion via Claude...', 'info');
+    setExportStatus('Exporting ' + selected.length + ' job(s) to Notion...', 'info');
 
     const today = new Date().toISOString().slice(0, 10);
+    const WORKER_URL = 'https://hidden-sound-1f43.mpouncey.workers.dev/';
+    const DB_ID = 'f803c4a2-e355-471c-8e7a-0f2e1085f729';
+    let success = 0, failed = 0;
 
-    const jobLines = selected.map((j, i) => {
-      const src      = srcInfo(j.job_publisher).label;
-      const loc      = j.job_is_remote ? 'Remote' : (j.job_city && j.job_state ? j.job_city + ', ' + j.job_state : j.job_country || '');
-      const sal      = fmtSalary(j) || 'Not listed';
-      const type     = badgeLabel(j.job_employment_type);
-      const url      = j.job_apply_link || j.job_google_link || '';
-      const notionSrc = ['Indeed','LinkedIn','DICE'].includes(src) ? src : 'Other';
-      return `Job ${i+1}:
-- Job Title: ${j.job_title || 'Unknown'}
-- Company: ${j.employer_name || ''}
-- Location: ${loc}
-- Job Type: ${type}
-- Salary: ${sal}
-- Retrieved From: ${notionSrc}
-- Job URL: ${url}
-- Date Added: ${today}
-- Notes: ${(j.job_description || '').slice(0, 300)}`;
-    }).join('\n\n');
+    for (const j of selected) {
+      const src        = srcInfo(j.job_publisher).label;
+      const loc        = j.job_is_remote ? 'Remote' : (j.job_city && j.job_state ? j.job_city + ', ' + j.job_state : j.job_country || '');
+      const sal        = fmtSalary(j) || '';
+      const type       = badgeLabel(j.job_employment_type);
+      const notionType = {'Full-time':'Full-time','Contract':'Contract','Part-time':'Part-time','Internship':'Internship','—':'Full-time'}[type] || 'Full-time';
+      const notionSrc  = ['Indeed','LinkedIn','DICE'].includes(src) ? src : 'Other';
+      const applyUrl   = j.job_apply_link || j.job_google_link || null;
 
-    const prompt = `Please add the following job listings to my Notion IT Job Tracker database (ID: ${NOTION_DB_ID}). For each job, create a new page with these exact fields. Set Status to "New", Interview Y/N to unchecked, leave Applied Date, Date of Interview, and Contact Name blank.
+      const payload = {
+        parent: { database_id: DB_ID },
+        properties: {
+          'Job Title':      { title:     [{ text: { content: (j.job_title || 'Unknown').slice(0,100) } }] },
+          'Company':        { rich_text: [{ text: { content: (j.employer_name || '').slice(0,100) } }] },
+          'Location':       { rich_text: [{ text: { content: loc.slice(0,100) } }] },
+          'Job Type':       { select:    { name: notionType } },
+          'Salary':         { rich_text: [{ text: { content: sal.slice(0,100) } }] },
+          'Status':         { select:    { name: 'New' } },
+          'Retrieved From': { select:    { name: notionSrc } },
+          'Notes':          { rich_text: [{ text: { content: (j.job_description || '').slice(0,400) } }] },
+          'Interview Y/N':  { checkbox:  false },
+          'Contact Name':   { rich_text: [{ text: { content: '' } }] },
+          'Date Added':     { date:      { start: today } }
+        }
+      };
 
-${jobLines}
+      // Only add Job URL if we have one — null url field causes Notion errors
+      if (applyUrl) payload.properties['Job URL'] = { url: applyUrl };
 
-Please add all ${selected.length} jobs to the database now using the Notion MCP tool.`;
-
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2048,
-          mcp_servers: [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion' }],
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error('API error ' + res.status + ': ' + txt.slice(0, 120));
+      try {
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && !data.object === 'error') { success++; }
+        else if (data.object === 'error') {
+          console.error('Notion rejected:', data.message);
+          failed++;
+        } else { success++; }
+      } catch(e) {
+        console.error('Fetch error:', e);
+        failed++;
       }
+    }
 
-      const data = await res.json();
-      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join(' ');
-      const toolUses   = (data.content || []).filter(b => b.type === 'mcp_tool_use').length;
+    btn.disabled = false;
+    btn.textContent = 'Export selected';
 
-      if (toolUses > 0 || /added|created|success/i.test(textBlocks)) {
-        setExportStatus('✓ ' + selected.length + ' job(s) exported to Notion! Open your IT Job Tracker to fill in Interview, Applied Date, and Contact details.', 'success');
-      } else {
-        setExportStatus('Export may have partially worked. Check your Notion IT Job Tracker to confirm. Response: ' + textBlocks.slice(0, 200), 'warn');
-      }
-
-    } catch(e) {
-      setExportStatus('Export error: ' + e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Export selected';
+    if (success > 0 && failed === 0) {
+      setExportStatus('✓ ' + success + ' job(s) exported to Notion! Open your IT Job Tracker to fill in Interview, Applied Date, and Contact details.', 'success');
+    } else if (success > 0) {
+      setExportStatus('✓ ' + success + ' exported, ' + failed + ' failed.', 'warn');
+    } else {
+      setExportStatus('Export failed. Check browser console (F12) for Notion error details.', 'error');
     }
   }
 
